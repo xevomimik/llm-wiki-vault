@@ -44,7 +44,6 @@ def extract_concepts(source_path, source_type):
     In production, this calls an LLM (local or remote).
     Returns list of concept dicts.
     """
-    # Placeholder - replace with actual LLM call
     content = source_path.read_text(encoding="utf-8")
     title = source_path.stem
     
@@ -75,16 +74,22 @@ def extract_concepts(source_path, source_type):
 
 def write_concept(concept, category):
     """Write concept to wiki/ or proposed/ directory."""
-    target_dir = WIKI_DIR / category / (concept["type"] + "s")
+    # Proper pluralization
+    plural_map = {
+        "entity": "entities",
+        "concept": "concepts",
+        "project": "projects",
+        "source": "sources",
+    }
+    plural = plural_map.get(concept["type"], concept["type"] + "s")
+    target_dir = WIKI_DIR / category / plural
     target_dir.mkdir(parents=True, exist_ok=True)
     
     safe_name = concept["name"].lower().replace(" ", "-")
     file_path = target_dir / f"{safe_name}.md"
     
-    # Determine if new or update
     is_new = not file_path.exists()
     
-    # Build content with citation
     content = f"""# {concept['name']}
 
 **Type:** {concept['type'].title()}  
@@ -116,7 +121,6 @@ def update_index():
             for md_file in sorted(subdir.glob("*.md")):
                 title = md_file.stem
                 rel_path = md_file.relative_to(WIKI_DIR)
-                # Read first line after ## Summary
                 content = md_file.read_text(encoding="utf-8")
                 summary = ""
                 for line in content.split("\n"):
